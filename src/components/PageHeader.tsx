@@ -9,10 +9,11 @@ interface PageHeaderProps {
 }
 
 const QUICK_RANGES = [
-  { key: 'hoje', label: 'Hoje' },
-  { key: '7d',   label: '7 dias' },
-  { key: 'mes',  label: 'Este mês' },
-  { key: '90d',  label: '90 dias' },
+  { key: 'hoje',  label: 'Hoje'     },
+  { key: 'ontem', label: 'Ontem'    },
+  { key: '7d',    label: '7 dias'   },
+  { key: 'mes',   label: 'Este mês' },
+  { key: '90d',   label: '90 dias'  },
 ] as const;
 
 export function PageHeader({ title, showFilters = true }: PageHeaderProps) {
@@ -22,11 +23,10 @@ export function PageHeader({ title, showFilters = true }: PageHeaderProps) {
     channel,
     product,
     activeRange,
-    setDateFrom,
-    setDateTo,
     setChannel,
     setProduct,
     setRange,
+    applyCustom,
   } = useFilters();
   const { products } = useProducts();
 
@@ -38,9 +38,8 @@ export function PageHeader({ title, showFilters = true }: PageHeaderProps) {
 
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  function applyCustom() {
-    setDateFrom(customFrom);
-    setDateTo(customTo);
+  function handleApplyCustom() {
+    applyCustom(customFrom, customTo);
     setCustomOpen(false);
   }
 
@@ -101,7 +100,7 @@ export function PageHeader({ title, showFilters = true }: PageHeaderProps) {
                 />
               </div>
               <button
-                onClick={applyCustom}
+                onClick={handleApplyCustom}
                 className="w-full h-9 rounded-lg bg-[#80d7f8] text-black text-xs font-bold hover:bg-[#a8e8ff] transition-colors"
               >
                 Aplicar

@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useFilters } from './useFilters'
+import {
+  startOfDayUTC,
+  endOfDayUTC,
+  utcToLocalDateStr,
+  getDaysInRange,
+} from '@/lib/dates'
 
 const TABLE = 'gabriel_info_eua_CRM'
 
@@ -27,11 +33,14 @@ export function useChartData() {
     async function load() {
       setLoading(true)
       try {
+        const from = startOfDayUTC(dateFrom)
+        const to = endOfDayUTC(dateTo)
+
         let q = supabase
           .from(TABLE)
           .select('created_at, utm_source, "($)"')
-          .gte('created_at', `${dateFrom}T00:00:00.000Z`)
-          .lte('created_at', `${dateTo}T23:59:59.999Z`)
+          .gte('created_at', from)
+          .lte('created_at', to)
           .eq('Event', 'order_paid')
           .in('utm_source', ['SMS', 'EMAIL'])
 
@@ -44,8 +53,13 @@ export function useChartData() {
 
         const map: Record<string, { sms: number; email: number; smsValue: number; emailValue: number }> = {}
 
+        // Pré-popula todos os dias do período com zero para não sumir do gráfico
+        for (const day of getDaysInRange(dateFrom, dateTo)) {
+          map[day] = { sms: 0, email: 0, smsValue: 0, emailValue: 0 }
+        }
+
         ;((rows ?? []) as any[]).forEach((r) => {
-          const day = String(r.created_at).slice(0, 10)
+          const day = utcToLocalDateStr(String(r.created_at))
           if (!map[day]) map[day] = { sms: 0, email: 0, smsValue: 0, emailValue: 0 }
           if (r.utm_source === 'SMS') {
             map[day].sms++
