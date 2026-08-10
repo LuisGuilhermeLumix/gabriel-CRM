@@ -67,7 +67,7 @@ function DashboardPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <MetricCard
             label="Ticket Médio"
             icon={Receipt}
@@ -82,6 +82,12 @@ function DashboardPage() {
             loading={loading}
             value={formatCurrency(m.receitaRecuperada.total)}
             subInfo={`SMS: ${formatCurrency(m.receitaRecuperada.sms)} | Email: ${formatCurrency(m.receitaRecuperada.email)}`}
+          />
+          <MetricCard
+            label="Faturamento Total (Front)"
+            icon={TrendingUp}
+            loading={loading}
+            value={formatCurrency(m.faturamentoFront)}
           />
           <MetricCard
             label="Comissão Lumix"

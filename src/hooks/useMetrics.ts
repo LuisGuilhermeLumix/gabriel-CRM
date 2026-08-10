@@ -19,6 +19,7 @@ export interface DashboardMetrics {
   taxaConversao: { total: number; sms: number; email: number }
   ticketMedio: { total: number; sms: number; email: number }
   receitaRecuperada: { total: number; sms: number; email: number }
+  faturamentoFront: number
   comissaoLumix: number
   faturamentoSobFrontPct: number
 }
@@ -30,6 +31,7 @@ const zero: DashboardMetrics = {
   taxaConversao: { total: 0, sms: 0, email: 0 },
   ticketMedio: { total: 0, sms: 0, email: 0 },
   receitaRecuperada: { total: 0, sms: 0, email: 0 },
+  faturamentoFront: 0,
   comissaoLumix: 0,
   faturamentoSobFrontPct: 0,
 }
@@ -164,6 +166,11 @@ export function useMetrics() {
 
         const comissao = calcComissaoLumix(totalReceita)
 
+        // Faturamento total do front (orgânico). Não sofre filtro de canal —
+        // FRONT não é SMS nem Email.
+        const frontSales = ((frontRes as any).data ?? []) as any[]
+        const frontTotal = frontSales.reduce((acc, r) => acc + parseDollar(r['($)']), 0)
+
         const cfg = (cfgRes as any).data
         const totalRevenueCfg = parseDollar(cfg?.total_revenue_usd)
         const smsCost = parseDollar(cfg?.sms_cost_usd)
@@ -173,8 +180,6 @@ export function useMetrics() {
         if (totalRevenueCfg > 0) {
           faturamentoPct = ((totalReceita - smsCost - emailCost) / totalRevenueCfg) * 100
         } else {
-          const frontSales = ((frontRes as any).data ?? []) as any[]
-          const frontTotal = frontSales.reduce((acc, r) => acc + parseDollar(r['($)']), 0)
           faturamentoPct = frontTotal > 0 ? (totalReceita / frontTotal) * 100 : 0
         }
 
@@ -185,6 +190,7 @@ export function useMetrics() {
           taxaConversao: { total: taxaTotal, sms: taxaSms, email: taxaEmail },
           ticketMedio: { total: ticketTotal, sms: ticketSms, email: ticketEmail },
           receitaRecuperada: { total: totalReceita, sms: smsReceita, email: emailReceita },
+          faturamentoFront: frontTotal,
           comissaoLumix: comissao,
           faturamentoSobFrontPct: faturamentoPct,
         })
