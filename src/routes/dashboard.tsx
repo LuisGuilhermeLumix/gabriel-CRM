@@ -8,14 +8,15 @@ import {
   Wallet,
   BadgeDollarSign,
   ShoppingCart,
+  CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { MetricCard } from "@/components/MetricCard";
+import { MetricCard, MetricBreakdownRow } from "@/components/MetricCard";
 import { RecoveryChart } from "@/components/RecoveryChart";
 import { LeadsTable } from "@/components/LeadsTable";
 import { CostsModal } from "@/components/CostsModal";
-import { useMetrics } from "@/hooks/useMetrics";
+import { useMetrics, RecoveryMetric } from "@/hooks/useMetrics";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
 
 export const Route = createFileRoute("/dashboard")({
@@ -28,15 +29,37 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
 
+// Cores dos fluxos de recuperação (padrão dos CRMs Lumix)
+const FLOW_COLORS = {
+  cart: "#f59e0b", // Carrinho Abandonado
+  card: "#ef4444", // Cartão Recusado
+} as const;
+
+function flowBreakdown(
+  m: RecoveryMetric,
+  fmt: (v: number) => string,
+): MetricBreakdownRow[] {
+  return [
+    { color: FLOW_COLORS.cart, label: "Carrinho Abandonado", value: fmt(m.cart) },
+    { color: FLOW_COLORS.card, label: "Cartão Recusado", value: fmt(m.card) },
+  ];
+}
+
+function channelSub(m: RecoveryMetric, fmt: (v: number) => string): string {
+  return `SMS: ${fmt(m.sms)} | Email: ${fmt(m.email)}`;
+}
+
 function DashboardPage() {
   const [costsOpen, setCostsOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const { metrics: m, loading } = useMetrics();
 
+  const fmtPct = (v: number) => formatPercent(v, 1);
+
   return (
     <AppLayout title="Dashboard">
       <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <MetricCard
             label="Carrinhos Abandonados"
             icon={ShoppingCart}
@@ -44,11 +67,18 @@ function DashboardPage() {
             value={formatNumber(m.carrinhosAbandonados)}
           />
           <MetricCard
+            label="Cartões Recusados"
+            icon={CreditCard}
+            loading={loading}
+            value={formatNumber(m.cartoesRecusados)}
+          />
+          <MetricCard
             label="Disparos Feitos"
             icon={Send}
             loading={loading}
             value={formatNumber(m.disparosFeitos.total)}
-            subInfo={`SMS: ${formatNumber(m.disparosFeitos.sms)} | Email: ${formatNumber(m.disparosFeitos.email)}`}
+            subInfo={channelSub(m.disparosFeitos, formatNumber)}
+            breakdown={flowBreakdown(m.disparosFeitos, formatNumber)}
           />
           <MetricCard
             label="Vendas Recuperadas"
@@ -56,14 +86,16 @@ function DashboardPage() {
             variant="brand"
             loading={loading}
             value={formatNumber(m.vendasRecuperadas.total)}
-            subInfo={`SMS: ${formatNumber(m.vendasRecuperadas.sms)} | Email: ${formatNumber(m.vendasRecuperadas.email)}`}
+            subInfo={channelSub(m.vendasRecuperadas, formatNumber)}
+            breakdown={flowBreakdown(m.vendasRecuperadas, formatNumber)}
           />
           <MetricCard
             label="Taxa de Conversão"
             icon={Target}
             loading={loading}
-            value={formatPercent(m.taxaConversao.total, 1)}
-            subInfo={`SMS: ${formatPercent(m.taxaConversao.sms, 1)} | Email: ${formatPercent(m.taxaConversao.email, 1)}`}
+            value={fmtPct(m.taxaConversao.total)}
+            subInfo={channelSub(m.taxaConversao, fmtPct)}
+            breakdown={flowBreakdown(m.taxaConversao, fmtPct)}
           />
         </div>
 
@@ -73,7 +105,8 @@ function DashboardPage() {
             icon={Receipt}
             loading={loading}
             value={formatCurrency(m.ticketMedio.total)}
-            subInfo={`SMS: ${formatCurrency(m.ticketMedio.sms)} | Email: ${formatCurrency(m.ticketMedio.email)}`}
+            subInfo={channelSub(m.ticketMedio, formatCurrency)}
+            breakdown={flowBreakdown(m.ticketMedio, formatCurrency)}
           />
           <MetricCard
             label="Valor Recuperado"
@@ -81,7 +114,8 @@ function DashboardPage() {
             variant="brand"
             loading={loading}
             value={formatCurrency(m.receitaRecuperada.total)}
-            subInfo={`SMS: ${formatCurrency(m.receitaRecuperada.sms)} | Email: ${formatCurrency(m.receitaRecuperada.email)}`}
+            subInfo={channelSub(m.receitaRecuperada, formatCurrency)}
+            breakdown={flowBreakdown(m.receitaRecuperada, formatCurrency)}
           />
           <MetricCard
             label="Faturamento Total (Front)"

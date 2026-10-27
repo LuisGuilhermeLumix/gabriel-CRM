@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, fetchAllRows } from '@/lib/supabase'
 import { useFilters } from './useFilters'
 import {
   startOfDayUTC,
@@ -36,20 +36,22 @@ export function useChartData() {
         const from = startOfDayUTC(dateFrom)
         const to = endOfDayUTC(dateTo)
 
-        let q = supabase
-          .from(TABLE)
-          .select('created_at, utm_source, "($)"')
-          .gte('created_at', from)
-          .lte('created_at', to)
-          .eq('Event', 'order_paid')
-          .in('utm_source', ['SMS', 'EMAIL'])
+        // Vendas recuperadas (order_paid via SMS/EMAIL), paginado para não
+        // cortar em 1000 linhas. Os dois fluxos (carrinho + cartão) entram.
+        const rows = await fetchAllRows<any>(() => {
+          let q = supabase
+            .from(TABLE)
+            .select('id, created_at, utm_source, "($)"')
+            .gte('created_at', from)
+            .lte('created_at', to)
+            .eq('Event', 'order_paid')
+            .in('utm_source', ['SMS', 'EMAIL'])
 
-        if (channel === 'SMS') q = q.eq('utm_source', 'SMS')
-        if (channel === 'Email') q = q.eq('utm_source', 'EMAIL')
-        if (product && product !== 'Todos') q = q.eq('product', product)
-
-        const { data: rows, error } = await q
-        if (error) throw error
+          if (channel === 'SMS') q = q.eq('utm_source', 'SMS')
+          if (channel === 'Email') q = q.eq('utm_source', 'EMAIL')
+          if (product && product !== 'Todos') q = q.eq('product', product)
+          return q
+        })
 
         const map: Record<string, { sms: number; email: number; smsValue: number; emailValue: number }> = {}
 
@@ -58,7 +60,7 @@ export function useChartData() {
           map[day] = { sms: 0, email: 0, smsValue: 0, emailValue: 0 }
         }
 
-        ;((rows ?? []) as any[]).forEach((r) => {
+        rows.forEach((r) => {
           const day = utcToLocalDateStr(String(r.created_at))
           if (!map[day]) map[day] = { sms: 0, email: 0, smsValue: 0, emailValue: 0 }
           if (r.utm_source === 'SMS') {

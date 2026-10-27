@@ -119,7 +119,7 @@ export function LeadsTable() {
                 <span className="text-[11px] text-[#555]">{formatDateLong(lead.date)}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-[13px] font-semibold text-white">
-                    {formatCurrency(lead.recoveredValue)}
+                    {lead.status === "Recuperado" ? formatCurrency(lead.recoveredValue) : "—"}
                   </span>
                   <StatusBadge status={lead.status} />
                 </div>
@@ -193,6 +193,7 @@ function StatusBadge({ status }: { status: LeadRow["status"] }) {
     Recuperado: { bg: "rgba(34,197,94,0.10)", color: "#22c55e" },
     Disparado: { bg: "rgba(245,158,11,0.10)", color: "#f59e0b" },
     Pendente: { bg: "rgba(100,100,100,0.10)", color: "#888" },
+    "Cartão Recusado": { bg: "rgba(239,68,68,0.10)", color: "#ef4444" },
   } as const;
   const s = map[status];
   return (

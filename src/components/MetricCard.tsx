@@ -1,10 +1,18 @@
 import { LucideIcon, Pencil } from "lucide-react";
 import { ReactNode } from "react";
 
+export interface MetricBreakdownRow {
+  color: string;
+  label: string;
+  value: ReactNode;
+}
+
 interface MetricCardProps {
   label: string;
   value: ReactNode;
   subInfo?: ReactNode;
+  /** Rodapé com divisor: bolinha colorida, rótulo à esquerda, valor à direita. */
+  breakdown?: MetricBreakdownRow[];
   icon?: LucideIcon;
   loading?: boolean;
   variant?: "default" | "brand" | "brand2";
@@ -16,6 +24,7 @@ export function MetricCard({
   label,
   value,
   subInfo,
+  breakdown,
   icon: Icon,
   loading,
   variant = "default",
@@ -70,6 +79,13 @@ export function MetricCard({
         <>
           <div className="h-8 w-32 rounded animate-pulse bg-white/[0.04]" />
           <div className="h-3.5 w-40 rounded animate-pulse bg-white/[0.04] mt-3" />
+          {breakdown && breakdown.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-[#1a1a1a] space-y-2">
+              {breakdown.map((_, i) => (
+                <div key={i} className="h-3 w-full rounded animate-pulse bg-white/[0.03]" />
+              ))}
+            </div>
+          )}
         </>
       ) : (
         <>
@@ -79,6 +95,25 @@ export function MetricCard({
             {value}
           </div>
           {subInfo && <div className="mt-2 text-xs text-[#555]">{subInfo}</div>}
+          {breakdown && breakdown.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-[#1a1a1a] space-y-1.5">
+              {breakdown.map((row) => (
+                <div
+                  key={row.label}
+                  className="flex items-center justify-between gap-3 text-xs"
+                >
+                  <span className="flex items-center gap-2 text-[#777] min-w-0">
+                    <span
+                      className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ background: row.color }}
+                    />
+                    <span className="truncate">{row.label}</span>
+                  </span>
+                  <span className="font-semibold text-[#ddd] whitespace-nowrap">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>
