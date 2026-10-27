@@ -56,7 +56,7 @@ export function LeadsTable() {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[#0a0a0a]">
-              {["Data", "Nome", "Email", "Produto", "Canal", "Valor Recuperado", "Status"].map((h) => (
+              {["Data", "Nome", "Email", "Produto", "Canal", "Fluxo", "Valor Recuperado", "Status"].map((h) => (
                 <th
                   key={h}
                   className="text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#555] px-4 py-3"
@@ -70,7 +70,7 @@ export function LeadsTable() {
             {loading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i} className="border-b border-[#0f0f0f]">
-                  {Array.from({ length: 7 }).map((_, j) => (
+                  {Array.from({ length: 8 }).map((_, j) => (
                     <td key={j} className="px-4 py-3.5">
                       <div className="h-4 rounded animate-pulse bg-white/[0.04]" />
                     </td>
@@ -79,7 +79,7 @@ export function LeadsTable() {
               ))
             ) : pageData.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-16 text-center">
+                <td colSpan={8} className="py-16 text-center">
                   <Inbox size={48} className="mx-auto text-[#333] mb-3" />
                   <div className="text-sm text-[#444]">Nenhum lead encontrado</div>
                 </td>
@@ -111,7 +111,10 @@ export function LeadsTable() {
             <div key={lead.id} className="p-4 space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[13px] font-medium text-white truncate">{lead.name}</span>
-                <ChannelBadge channel={lead.channel} />
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <ChannelBadge channel={lead.channel} />
+                  <FlowBadge flow={lead.flow} />
+                </div>
               </div>
               <div className="text-xs text-[#888] font-mono truncate">{lead.email}</div>
               <div className="text-xs text-[#666]">{lead.product}</div>
@@ -119,7 +122,7 @@ export function LeadsTable() {
                 <span className="text-[11px] text-[#555]">{formatDateLong(lead.date)}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-[13px] font-semibold text-white">
-                    {lead.status === "Recuperado" ? formatCurrency(lead.recoveredValue) : "—"}
+                    {formatCurrency(lead.recoveredValue)}
                   </span>
                   <StatusBadge status={lead.status} />
                 </div>
@@ -162,6 +165,9 @@ function LeadRowItem({ lead }: { lead: LeadRow }) {
       <td className="px-4 py-3.5">
         <ChannelBadge channel={lead.channel} />
       </td>
+      <td className="px-4 py-3.5">
+        <FlowBadge flow={lead.flow} />
+      </td>
       <td className="px-4 py-3.5 text-white font-medium">
         {lead.status === "Recuperado" ? formatCurrency(lead.recoveredValue) : "—"}
       </td>
@@ -188,12 +194,28 @@ export function ChannelBadge({ channel }: { channel: "SMS" | "Email" }) {
   );
 }
 
+// Fluxo de recuperação da venda (recovery_type): Carrinho (âmbar) ou Cartão Recusado (vermelho)
+function FlowBadge({ flow }: { flow: LeadRow["flow"] }) {
+  const map = {
+    Carrinho: { bg: "rgba(245,158,11,0.10)", color: "#f59e0b" },
+    "Cartão Recusado": { bg: "rgba(239,68,68,0.10)", color: "#ef4444" },
+  } as const;
+  const s = map[flow];
+  return (
+    <span
+      className="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap"
+      style={{ backgroundColor: s.bg, color: s.color }}
+    >
+      {flow}
+    </span>
+  );
+}
+
 function StatusBadge({ status }: { status: LeadRow["status"] }) {
   const map = {
     Recuperado: { bg: "rgba(34,197,94,0.10)", color: "#22c55e" },
     Disparado: { bg: "rgba(245,158,11,0.10)", color: "#f59e0b" },
     Pendente: { bg: "rgba(100,100,100,0.10)", color: "#888" },
-    "Cartão Recusado": { bg: "rgba(239,68,68,0.10)", color: "#ef4444" },
   } as const;
   const s = map[status];
   return (
